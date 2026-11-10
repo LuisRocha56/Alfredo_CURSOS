@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capacitaciones Privadas - Academy OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#121214',
+                        cardbg: '#1c1c21',
+                        bordercolor: '#2e2e36',
+                        accent: '#00F0FF'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-tech { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-100 min-h-screen flex flex-col selection:bg-accent selection:text-black">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-bordercolor bg-cardbg/50 backdrop-blur sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-accent rounded-full animate-pulse"></div>
+            <span class="font-tech font-bold tracking-wider text-lg">ACADEMY_OS <span class="text-xs text-gray-500 font-normal">v1.0</span></span>
+        </div>
+        <div class="flex items-center space-x-6 text-sm">
+            <div class="hidden sm:flex flex-col text-right">
+                <!--<span id="expiration-text" class="text-gray-400 text-xs">Calculando caducidad...</span>-->
+                <span class="text-accent font-medium">Licencia Activa (1 Año)</span>
+            </div>
+            <div id="user-avatar" class="w-9 h-9 rounded bg-bordercolor flex items-center justify-center font-tech font-bold text-sm border border-gray-700">
+                US
+            </div>
+            <button onclick="logout()" class="text-xs text-gray-400 hover:text-red-400 font-mono underline">Salir</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-6 py-10 flex-1 w-full space-y-8">
+        
+        <!-- Welcome Banner -->
+        <div class="border border-bordercolor bg-cardbg p-6 rounded-lg relative overflow-hidden">
+            <div class="absolute right-0 top-0 bottom-0 w-1 bg-accent"></div>
+            <h1 id="welcome-title" class="text-2xl sm:text-3xl font-bold tracking-tight mb-2">Panel de Colaborador</h1>
+            <p class="text-gray-400 text-sm max-w-2xl">
+                Bienvenido al sistema de capacitación interna. Tus rutas de aprendizaje obligatorias se han sincronizado con tu perfil.
+            </p>
+        </div>
+
+        <!-- Section: Courses Grid -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="font-tech text-xl font-bold tracking-wide">Cursos Asignados</h2>
+                <span id="role-badge" class="text-xs text-gray-500 border border-bordercolor px-2.5 py-1 rounded font-mono">Rol: Cargando...</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Course Card 1 -->
+                <div class="border border-bordercolor bg-cardbg p-5 rounded-lg flex flex-col justify-between hover:border-gray-600 transition-all group">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-mono uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded">Obligatorio</span>
+                            <span class="text-xs text-gray-400">4 módulos</span>
+                        </div>
+                        <h3 class="font-tech font-bold text-lg mb-1 group-hover:text-accent transition-colors">Seguridad de la Información y Compliance</h3>
+                        <p class="text-sm text-gray-400 mb-6">Normativas internas, manejo seguro de datos corporativos y prevención de brechas.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-400 mb-1.5 font-mono">
+                            <span>Progreso guardado</span>
+                            <span class="text-gray-200">75%</span>
+                        </div>
+                        <div class="w-full bg-bordercolor h-1.5 rounded-full overflow-hidden mb-4">
+                            <div class="bg-accent h-full w-3/4"></div>
+                        </div>
+                        <button class="w-full py-2 bg-gray-100 hover:bg-accent text-black font-semibold text-xs tracking-wider uppercase transition-colors rounded">
+                            Continuar Curso
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Cargar datos del usuario logueado
+        const currentUser = JSON.parse(localStorage.getItem('academy_current_user'));
+
+        if (!currentUser) {
+            // Si no hay sesión iniciada, lo patea al login
+            window.location.href = 'login.html';
+        } else {
+            // Rellenar datos de manera dinámica en la interfaz
+            document.getElementById('welcome-title').textContent = `Hola, ${currentUser.nombre}`;
+            document.getElementById('role-badge').textContent = `Área: ${currentUser.area}`;
+            
+            // Iniciales para el avatar
+            const initials = currentUser.nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+            document.getElementById('user-avatar').textContent = initials;
+
+            // Calcular días restantes de la caducidad de 1 año
+            const expDate = new Date(currentUser.expires_at);
+            const today = new Date();
+            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+            document.getElementById('expiration-text').textContent = `${diffDays} días restantes`;
+        }
+
+        function logout() {
+            localStorage.removeItem('academy_current_user');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

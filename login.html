@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Academy OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#121214',
+                        cardbg: '#1c1c21',
+                        bordercolor: '#2e2e36',
+                        accent: '#00F0FF'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-tech { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-100 min-h-screen flex items-center justify-center px-4 selection:bg-accent selection:text-black">
+
+    <div class="w-full max-w-md border border-bordercolor bg-cardbg p-8 rounded-lg relative shadow-2xl">
+        <div class="absolute left-0 top-0 right-0 h-1 bg-accent rounded-t"></div>
+
+        <!-- Encabezado dinámico -->
+        <div class="mb-6 text-center">
+            <div class="inline-flex items-center justify-center w-10 h-10 rounded bg-bordercolor mb-3 border border-gray-700">
+                <div class="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+            </div>
+            <h1 class="font-tech text-2xl font-bold tracking-tight">ACADEMY_OS</h1>
+            <p id="form-subtitle" class="text-xs text-gray-400 mt-1">Plataforma de Capacitación Privada</p>
+        </div>
+
+        <!-- Formulario unificado -->
+        <form id="authForm" class="space-y-4" onsubmit="handleAuth(event)">
+            
+            <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Correo Electrónico</label>
+                <input type="email" id="email" required placeholder="tu.correo@empresa.com" 
+                    class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent font-mono"
+                    onblur="checkUserExistence()">
+            </div>
+
+            <!-- Campos extras que solo aparecen si es un registro nuevo -->
+            <div id="registerFields" class="space-y-4 hidden transition-all duration-300">
+                <div>
+                    <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Nombre Completo</label>
+                    <input type="text" id="nombre" placeholder="ej. Luis Rocha" 
+                        class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Área / Departamento</label>
+                    <select id="area" class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent">
+                        <option value="Ingeniería / Tech">Ingeniería / Tech</option>
+                        <option value="Ventas y Comercial">Ventas y Comercial</option>
+                        <option value="Operaciones">Operaciones</option>
+                        <option value="Administración">Administración</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Contraseña</label>
+                <input type="password" id="password" required placeholder="••••••••" 
+                    class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent font-mono">
+            </div>
+
+            <div id="msg" class="text-xs text-accent font-mono min-h-[16px]"></div>
+
+            <button type="submit" id="submitBtn" class="w-full py-2.5 bg-accent hover:bg-cyan-400 text-black font-semibold text-xs tracking-wider uppercase transition-colors rounded font-tech">
+                Verificar Acceso
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Simulación de base de datos en el navegador (localStorage)
+        function checkUserExistence() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) return;
+
+            const users = JSON.parse(localStorage.getItem('academy_users') || '{}');
+            const registerFields = document.getElementById('registerFields');
+            const subtitle = document.getElementById('form-subtitle');
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('msg');
+
+            if (users[email]) {
+                // El usuario ya existe
+                registerFields.classList.add('hidden');
+                subtitle.textContent = "Bienvenido de nuevo. Ingresa tu contraseña.";
+                btn.textContent = "Iniciar Sesión";
+                msg.textContent = `Cuenta encontrada (${users[email].area}). Licencia vigente por 1 año.`;
+            } else {
+                // Es un usuario nuevo (registro)
+                registerFields.classList.remove('hidden');
+                subtitle.textContent = "Primer registro detectado. Completa tus datos.";
+                btn.textContent = "Registrar e Ingresar";
+                msg.textContent = "Se activará tu acceso por 365 días.";
+            }
+        }
+
+        function handleAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            let users = JSON.parse(localStorage.getItem('academy_users') || '{}');
+
+            if (users[email]) {
+                // Validar acceso existente
+                if (users[email].password === password) {
+                    localStorage.setItem('academy_current_user', JSON.stringify(users[email]));
+                    window.location.href = 'index.html'; // Redirige al panel
+                } else {
+                    alert('Contraseña incorrecta.');
+                }
+            } else {
+                // Registrar nuevo usuario con vigencia de 1 año
+                const nombre = document.getElementById('nombre').value;
+                const area = document.getElementById('area').value;
+                
+                const expirationDate = new Date();
+                expirationDate.setFullYear(expirationDate.getFullYear() + 1); // Sumar 1 año
+
+                const newUser = {
+                    email,
+                    password,
+                    nombre,
+                    area,
+                    expires_at: expirationDate.toISOString()
+                };
+
+                users[email] = newUser;
+                localStorage.setItem('academy_users', JSON.stringify(users));
+                localStorage.setItem('academy_current_user', JSON.stringify(newUser));
+                
+                window.location.href = 'index.html'; // Redirige al panel
+            }
+        }
+    </script>
+</body>
+</html>
