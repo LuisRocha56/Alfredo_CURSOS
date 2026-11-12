@@ -74,6 +74,15 @@
                     class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent font-mono">
             </div>
 
+            <div>
+                <label for="role" class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Rol de demostración</label>
+                <select id="role" class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100">
+                    <option value="miembro">Miembro</option>
+                    <option value="administrador">Administrador</option>
+                </select>
+                <p class="text-xs text-gray-400 mt-2">Prototipo local: el rol y las contraseñas no son seguros. No uses datos reales.</p>
+            </div>
+
             <div id="msg" class="text-xs text-accent font-mono min-h-[16px]"></div>
 
             <button type="submit" id="submitBtn" class="w-full py-2.5 bg-accent hover:bg-cyan-400 text-black font-semibold text-xs tracking-wider uppercase transition-colors rounded font-tech">
@@ -85,7 +94,7 @@
     <script>
         // Simulación de base de datos en el navegador (localStorage)
         function checkUserExistence() {
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
             if (!email) return;
 
             const users = JSON.parse(localStorage.getItem('academy_users') || '{}');
@@ -99,7 +108,7 @@
                 registerFields.classList.add('hidden');
                 subtitle.textContent = "Bienvenido de nuevo. Ingresa tu contraseña.";
                 btn.textContent = "Iniciar Sesión";
-                msg.textContent = `Cuenta encontrada (${users[email].area}). Licencia vigente por 1 año.`;
+                msg.textContent = `Cuenta encontrada (${users[email].area}).`;
             } else {
                 // Es un usuario nuevo (registro)
                 registerFields.classList.remove('hidden');
@@ -111,37 +120,51 @@
 
         function handleAuth(event) {
             event.preventDefault();
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
             let users = JSON.parse(localStorage.getItem('academy_users') || '{}');
 
             if (users[email]) {
                 // Validar acceso existente
                 if (users[email].password === password) {
-                    localStorage.setItem('academy_current_user', JSON.stringify(users[email]));
+                    if (Date.parse(users[email].expires_at) <= Date.now() || Number.isNaN(Date.parse(users[email].expires_at))) {
+                        document.getElementById('msg').textContent = 'Tu licencia ha caducado.';
+                        return;
+                    }
+                    const { password: storedPassword, ...session } = users[email];
+                    localStorage.setItem('academy_current_user', JSON.stringify({ ...session, role }));
                     window.location.href = 'index.html'; // Redirige al panel
                 } else {
                     alert('Contraseña incorrecta.');
                 }
             } else {
                 // Registrar nuevo usuario con vigencia de 1 año
-                const nombre = document.getElementById('nombre').value;
+                const nombre = document.getElementById('nombre').value.trim();
                 const area = document.getElementById('area').value;
-                
-                const expirationDate = new Date();
-                expirationDate.setFullYear(expirationDate.getFullYear() + 1); // Sumar 1 año
+                if (!nombre) {
+                    checkUserExistence();
+                    document.getElementById('msg').textContent = 'Ingresa tu nombre completo para registrarte.';
+                    document.getElementById('nombre').focus();
+                    return;
+                }
+
+                const createdAt = new Date();
+                const expirationDate = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
 
                 const newUser = {
                     email,
                     password,
                     nombre,
                     area,
+                    created_at: createdAt.toISOString(),
                     expires_at: expirationDate.toISOString()
                 };
 
                 users[email] = newUser;
                 localStorage.setItem('academy_users', JSON.stringify(users));
-                localStorage.setItem('academy_current_user', JSON.stringify(newUser));
+                const { password: storedPassword, ...session } = newUser;
+                localStorage.setItem('academy_current_user', JSON.stringify({ ...session, role }));
                 
                 window.location.href = 'index.html'; // Redirige al panel
             }

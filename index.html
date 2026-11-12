@@ -36,8 +36,7 @@
         </div>
         <div class="flex items-center space-x-6 text-sm">
             <div class="hidden sm:flex flex-col text-right">
-                <!--<span id="expiration-text" class="text-gray-400 text-xs">Calculando caducidad...</span>-->
-                <span class="text-accent font-medium">Licencia Activa (1 Año)</span>
+                <span id="expiration-text" class="text-accent font-medium">Calculando vigencia...</span>
             </div>
             <div id="user-avatar" class="w-9 h-9 rounded bg-bordercolor flex items-center justify-center font-tech font-bold text-sm border border-gray-700">
                 US
@@ -65,58 +64,108 @@
                 <span id="role-badge" class="text-xs text-gray-500 border border-bordercolor px-2.5 py-1 rounded font-mono">Rol: Cargando...</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <!-- Course Card 1 -->
-                <div class="border border-bordercolor bg-cardbg p-5 rounded-lg flex flex-col justify-between hover:border-gray-600 transition-all group">
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-xs font-mono uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded">Obligatorio</span>
-                            <span class="text-xs text-gray-400">4 módulos</span>
-                        </div>
-                        <h3 class="font-tech font-bold text-lg mb-1 group-hover:text-accent transition-colors">Seguridad de la Información y Compliance</h3>
-                        <p class="text-sm text-gray-400 mb-6">Normativas internas, manejo seguro de datos corporativos y prevención de brechas.</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-gray-400 mb-1.5 font-mono">
-                            <span>Progreso guardado</span>
-                            <span class="text-gray-200">75%</span>
-                        </div>
-                        <div class="w-full bg-bordercolor h-1.5 rounded-full overflow-hidden mb-4">
-                            <div class="bg-accent h-full w-3/4"></div>
-                        </div>
-                        <button class="w-full py-2 bg-gray-100 hover:bg-accent text-black font-semibold text-xs tracking-wider uppercase transition-colors rounded">
-                            Continuar Curso
-                        </button>
-                    </div>
-                </div>
-
-            </div>
+            <div id="courses" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
+        <section id="admin-panel" class="hidden border border-bordercolor bg-cardbg p-6 rounded-lg space-y-4">
+            <div>
+                <h2 class="font-tech text-xl font-bold">Crear curso</h2>
+                <p class="text-sm text-gray-400 mt-1">Cada archivo será un módulo, en el orden seleccionado. Usa presentaciones en PDF, imágenes o videos pequeños.</p>
+                <p class="text-xs text-amber-300 mt-2">Demostración: los archivos solo se guardan en este navegador y el espacio es limitado.</p>
+            </div>
+            <form id="course-form" class="space-y-3">
+                <label for="course-title" class="block text-xs font-mono text-gray-400">Título del curso</label>
+                <input id="course-title" required maxlength="120" class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm" placeholder="Nombre del curso">
+                <label for="course-description" class="block text-xs font-mono text-gray-400">Descripción</label>
+                <input id="course-description" maxlength="240" class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm" placeholder="Descripción breve">
+                <label for="course-files" class="block text-xs font-mono text-gray-400">Archivos de los módulos</label>
+                <input id="course-files" type="file" accept="application/pdf,image/*,video/*" multiple required class="block w-full text-sm text-gray-300">
+                <p id="course-message" role="status" class="text-xs text-accent"></p>
+                <button class="px-4 py-2 bg-accent hover:bg-cyan-400 text-black font-semibold text-xs uppercase rounded">Guardar curso</button>
+            </form>
+        </section>
     </main>
 
+    <script src="academy.js"></script>
     <script>
-        // Cargar datos del usuario logueado
-        const currentUser = JSON.parse(localStorage.getItem('academy_current_user'));
+        const currentUser = Academy.user();
 
-        if (!currentUser) {
-            // Si no hay sesión iniciada, lo patea al login
-            window.location.href = 'login.html';
-        } else {
-            // Rellenar datos de manera dinámica en la interfaz
+        if (currentUser) {
             document.getElementById('welcome-title').textContent = `Hola, ${currentUser.nombre}`;
-            document.getElementById('role-badge').textContent = `Área: ${currentUser.area}`;
-            
-            // Iniciales para el avatar
-            const initials = currentUser.nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+            document.getElementById('role-badge').textContent = `${currentUser.role === 'administrador' ? 'Administrador' : 'Miembro'} · ${currentUser.area}`;
+            const initials = currentUser.nombre.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-avatar').textContent = initials;
-
-            // Calcular días restantes de la caducidad de 1 año
-            const expDate = new Date(currentUser.expires_at);
-            const today = new Date();
-            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+            const diffDays = Math.ceil((new Date(currentUser.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
             document.getElementById('expiration-text').textContent = `${diffDays} días restantes`;
+            if (currentUser.role === 'administrador') document.getElementById('admin-panel').classList.remove('hidden');
+            renderCourses();
         }
+
+        function renderCourses() {
+            const container = document.getElementById('courses');
+            container.replaceChildren();
+            Academy.courses().forEach(course => {
+                const percent = Math.round(Academy.progress(currentUser, course).length / course.modules.length * 100);
+                const card = document.createElement('article');
+                card.className = 'border border-bordercolor bg-cardbg p-5 rounded-lg space-y-4';
+                const meta = document.createElement('p');
+                meta.className = 'text-xs font-mono text-accent';
+                meta.textContent = `${course.modules.length} módulos · ${percent}% completado`;
+                const title = document.createElement('h3');
+                title.className = 'font-tech font-bold text-lg';
+                title.textContent = course.title;
+                const description = document.createElement('p');
+                description.className = 'text-sm text-gray-400';
+                description.textContent = course.description;
+                const bar = document.createElement('progress');
+                bar.max = 100;
+                bar.value = percent;
+                bar.className = 'w-full h-2 accent-cyan-400';
+                bar.setAttribute('aria-label', `Progreso de ${course.title}`);
+                const link = document.createElement('a');
+                link.href = `curso.html?id=${encodeURIComponent(course.id)}`;
+                link.className = 'block text-center py-2 bg-gray-100 hover:bg-accent text-black font-semibold text-xs uppercase rounded';
+                link.textContent = percent ? 'Continuar curso' : 'Iniciar curso';
+                card.append(meta, title, description, bar, link);
+                container.append(card);
+            });
+        }
+
+        document.getElementById('course-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!currentUser || currentUser.role !== 'administrador') return;
+            const message = document.getElementById('course-message');
+            const files = Array.from(document.getElementById('course-files').files);
+            if (files.some(file => file.type !== 'application/pdf' && !file.type.startsWith('image/') && !file.type.startsWith('video/'))) {
+                message.textContent = 'Solo se admiten archivos PDF, imágenes y videos.';
+                return;
+            }
+            const title = document.getElementById('course-title').value.trim();
+            if (!title) {
+                message.textContent = 'Ingresa un título para el curso.';
+                return;
+            }
+            const button = event.currentTarget.querySelector('button');
+            button.disabled = true;
+            message.textContent = 'Guardando archivos...';
+            try {
+                const modules = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({ title: file.name, type: file.type, content: reader.result });
+                    reader.onerror = () => reject(new Error('No se pudo leer uno de los archivos.'));
+                    reader.readAsDataURL(file);
+                })));
+                const stored = JSON.parse(localStorage.getItem('academy_courses') || '[]');
+                stored.push({ id: crypto.randomUUID(), title, description: document.getElementById('course-description').value.trim(), modules });
+                localStorage.setItem('academy_courses', JSON.stringify(stored));
+                event.target.reset();
+                message.textContent = 'Curso guardado en este navegador.';
+                renderCourses();
+            } catch (error) {
+                message.textContent = error.name === 'QuotaExceededError' ? 'No hay espacio suficiente en el navegador. Prueba archivos más pequeños.' : `No se pudo guardar el curso: ${error.message}`;
+            } finally {
+                button.disabled = false;
+            }
+        });
 
         function logout() {
             localStorage.removeItem('academy_current_user');
