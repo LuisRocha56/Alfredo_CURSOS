@@ -91,7 +91,7 @@
 
         if (currentUser) {
             document.getElementById('welcome-title').textContent = `Hola, ${currentUser.nombre}`;
-            document.getElementById('role-badge').textContent = `${currentUser.role === 'administrador' ? 'Administrador' : 'Miembro'} · ${currentUser.area}`;
+            document.getElementById('role-badge').textContent = `${currentUser.role === 'administrador' ? 'Administrador' : 'Empleado'} · ${currentUser.area}`;
             const initials = currentUser.nombre.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-avatar').textContent = initials;
             const diffDays = Math.ceil((new Date(currentUser.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
@@ -132,7 +132,11 @@
 
         document.getElementById('course-form').addEventListener('submit', async event => {
             event.preventDefault();
-            if (!currentUser || currentUser.role !== 'administrador') return;
+            const activeUser = Academy.user();
+            if (!activeUser || activeUser.role !== 'administrador') {
+                document.getElementById('course-message').textContent = 'No tienes permiso para crear cursos.';
+                return;
+            }
             const message = document.getElementById('course-message');
             const files = Array.from(document.getElementById('course-files').files);
             if (files.some(file => file.type !== 'application/pdf' && !file.type.startsWith('image/') && !file.type.startsWith('video/'))) {

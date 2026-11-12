@@ -12,12 +12,15 @@ const Academy = (() => {
 
     function user() {
         const current = JSON.parse(localStorage.getItem('academy_current_user') || 'null');
-        if (!current || !current.email || !current.expires_at || Date.parse(current.expires_at) <= Date.now() || Number.isNaN(Date.parse(current.expires_at))) {
+        const users = JSON.parse(localStorage.getItem('academy_users') || '{}');
+        const account = current && users[current.email];
+        if (!account || !account.expires_at || Date.parse(account.expires_at) <= Date.now() || Number.isNaN(Date.parse(account.expires_at))) {
             localStorage.removeItem('academy_current_user');
             location.href = 'login.html';
             return null;
         }
-        return current;
+        const { password, ...user } = account;
+        return { ...user, role: user.role === 'administrador' ? 'administrador' : 'empleado' };
     }
 
     function courses() {

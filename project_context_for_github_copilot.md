@@ -25,6 +25,7 @@ Academy OS es una aplicación web web-based (independiente de dominios corporati
 - Priorizar la experiencia fluida, diseño responsivo y rendimiento rápido.
 
 ## Prototipo local
-- Inicia en `login.html`, registra una cuenta de prueba y selecciona el rol de demostración. El administrador puede crear cursos con módulos PDF, imágenes o videos; el miembro solo puede consultarlos.
+- Inicia en `login.html` y registra una cuenta de prueba: los usuarios nuevos son empleados. El administrador puede crear cursos con módulos PDF, imágenes o videos; el empleado solo puede consultarlos.
+- La asignación de roles por un usuario master mediante un apartado privado y configuración de Vercel queda pendiente de implementar en el servidor.
 - Los datos y archivos se guardan únicamente en el navegador y están sujetos a su límite de almacenamiento. Para presentaciones, usa archivos PDF.
 - Los roles y contraseñas son simulados y no ofrecen seguridad real. No uses datos reales ni publiques este prototipo como plataforma privada sin autenticación y almacenamiento en un servidor.

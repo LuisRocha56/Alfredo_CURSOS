@@ -74,15 +74,6 @@
                     class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-accent font-mono">
             </div>
 
-            <div>
-                <label for="role" class="block text-xs font-mono uppercase tracking-wider text-gray-400 mb-1.5">Rol de demostración</label>
-                <select id="role" class="w-full bg-darkbg border border-bordercolor rounded px-3 py-2 text-sm text-gray-100">
-                    <option value="miembro">Miembro</option>
-                    <option value="administrador">Administrador</option>
-                </select>
-                <p class="text-xs text-gray-400 mt-2">Prototipo local: el rol y las contraseñas no son seguros. No uses datos reales.</p>
-            </div>
-
             <div id="msg" class="text-xs text-accent font-mono min-h-[16px]"></div>
 
             <button type="submit" id="submitBtn" class="w-full py-2.5 bg-accent hover:bg-cyan-400 text-black font-semibold text-xs tracking-wider uppercase transition-colors rounded font-tech">
@@ -122,7 +113,6 @@
             event.preventDefault();
             const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
             let users = JSON.parse(localStorage.getItem('academy_users') || '{}');
 
             if (users[email]) {
@@ -133,7 +123,7 @@
                         return;
                     }
                     const { password: storedPassword, ...session } = users[email];
-                    localStorage.setItem('academy_current_user', JSON.stringify({ ...session, role }));
+                    localStorage.setItem('academy_current_user', JSON.stringify({ ...session, role: session.role || 'empleado' }));
                     window.location.href = 'index.html'; // Redirige al panel
                 } else {
                     alert('Contraseña incorrecta.');
@@ -157,6 +147,7 @@
                     password,
                     nombre,
                     area,
+                    role: 'empleado',
                     created_at: createdAt.toISOString(),
                     expires_at: expirationDate.toISOString()
                 };
@@ -164,7 +155,7 @@
                 users[email] = newUser;
                 localStorage.setItem('academy_users', JSON.stringify(users));
                 const { password: storedPassword, ...session } = newUser;
-                localStorage.setItem('academy_current_user', JSON.stringify({ ...session, role }));
+                localStorage.setItem('academy_current_user', JSON.stringify(session));
                 
                 window.location.href = 'index.html'; // Redirige al panel
             }
